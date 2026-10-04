@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# PyTorch / Machine Learning
+*.pt
+*.pth
+*.onnx
+runs/
+
+# ROS 2 & Gazebo
+build/
+install/
+log/
+*.db3
+*.bag
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Data & Analytics (Member 4)
+*.csv
+*.parquet

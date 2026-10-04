@@ -29,17 +29,45 @@ class SwarmActor(nn.Module):
         """
         return self.network(state)
 
+class SwarmCritic(nn.Module):
+    def __init__(self, num_drones=3):
+        super(SwarmCritic, self).__init__()
+        
+        # Centralized Training: The Critic sees EVERYTHING (all states + all actions)
+        total_obs = OBS_DIM * num_drones
+        total_actions = ACTION_DIM * num_drones
+        
+        self.network = nn.Sequential(
+            nn.Linear(total_obs + total_actions, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 1)  # Outputs a single Q-value (the "score")
+        )
+
+    def forward(self, state_all, action_all):
+        """
+        state_all: Concatenated 23-dim states of all 3 drones (69 dims)
+        action_all: Concatenated 4-dim actions of all 3 drones (12 dims)
+        """
+        # Glue the states and actions together into one giant list
+        x = torch.cat([state_all, action_all], dim=1)
+        return self.network(x)
 # --- Quick Test Block ---
 if __name__ == "__main__":
-    print(f"Building Actor Network with Input: {OBS_DIM}, Output: {ACTION_DIM}")
+    print("--- Testing Actor ---")
     actor = SwarmActor()
+    fake_obs = torch.randn(1, OBS_DIM)
+    fake_action = actor(fake_obs)
+    print(f"Actor Output Shape: {fake_action.shape} (Should be [1, {ACTION_DIM}])")
     
-    # Create a fake observation (a tensor of 23 random numbers)
-    fake_observation = torch.randn(1, OBS_DIM)
+    print("\n--- Testing Centralized Critic ---")
+    critic = SwarmCritic(num_drones=3)
     
-    # Pass it through the brain
-    fake_action = actor(fake_observation)
+    # Fake data for 3 drones
+    fake_all_states = torch.randn(1, OBS_DIM * 3)
+    fake_all_actions = torch.randn(1, ACTION_DIM * 3)
     
-    print(f"Fake Observation Shape: {fake_observation.shape}")
-    print(f"AI Action Output: {fake_action.detach().numpy()}")
-    print("Test passed! Action is bounded between -1 and 1.")
+    score = critic(fake_all_states, fake_all_actions)
+    print(f"Critic Score Output: {score.detach().numpy()}")
+    print("Test passed! Both networks are ready for MADDPG.")

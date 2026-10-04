@@ -29,6 +29,26 @@ class SwarmActor(nn.Module):
         """
         return self.network(state)
 
+class SwarmCritic(nn.Module):
+    def __init__(self, num_drones=3):
+        super(SwarmCritic, self).__init__()
+        
+        # Centralized Training: The Critic sees EVERYTHING
+        total_obs = OBS_DIM * num_drones
+        total_actions = ACTION_DIM * num_drones
+        
+        self.network = nn.Sequential(
+            nn.Linear(total_obs + total_actions, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 1)  
+        )
+
+    def forward(self, state_all, action_all):
+        # Glue the states and actions together into one giant list
+        x = torch.cat([state_all, action_all], dim=1)
+        return self.network(x)
 # --- Quick Test Block ---
 if __name__ == "__main__":
     print(f"Building Actor Network with Input: {OBS_DIM}, Output: {ACTION_DIM}")
